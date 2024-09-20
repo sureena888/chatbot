@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FaBars, FaPaperPlane, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaBars, FaPaperPlane, FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import TextareaAutosize from 'react-textarea-autosize';
 import { streamMessage, ChatMessage, Chat } from '../actions/stream-message';
 import { readStreamableValue } from 'ai/rsc';
@@ -135,25 +135,27 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 text-gray-800">
       {(sidebarOpen || !isMobile) && (
-        <aside className="w-full md:w-1/4 bg-gray-200 rounded-lg border m-4 relative">
-          <div className="flex items-center justify-between m-4">
-            <div className="flex items-center">
+        <aside className={`${isMobile ? 'fixed inset-0 z-50 sidebar-animation' : 'w-1/4'} bg-gray-200 p-4`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Previous Chats</h2>
+            <div>
               <button
-                onClick={() => setSidebarOpen(false)}
+                onClick={createNewChat}
                 className="text-gray-600 hover:text-gray-800 mr-2"
               >
-                <FaBars />
+                <FaPlus />
               </button>
-              <h2 className="text-xl font-bold text-gray-800">Previous Chats</h2>
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <FaTimes />
+                </button>
+              )}
             </div>
-            <button
-              onClick={createNewChat}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <FaPlus />
-            </button>
           </div>
           {chats.map(chat => (
             <div 
@@ -195,22 +197,22 @@ export default function Home() {
               </div>
             </div>
           ))}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="mt-4">
             <button
               onClick={clearAllChats}
-              className="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors"
+              className="w-full bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 transition-colors"
             >
               Clear All Chats
             </button>
           </div>
         </aside>
       )}
-      {(!sidebarOpen || isMobile) && (
+      {(!sidebarOpen && isMobile) && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="m-4 text-gray-600 hover:text-gray-800 md:hidden"
+          className="fixed top-4 left-4 z-40 text-gray-800"
         >
-          <FaBars />
+          <FaBars size={24} />
         </button>
       )}
       <main className="flex-1 flex flex-col p-4">
