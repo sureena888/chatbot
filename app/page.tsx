@@ -10,6 +10,7 @@ export default function Home() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const savedChats = localStorage.getItem('chats');
@@ -32,6 +33,13 @@ export default function Home() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (chats.length > 0) {
@@ -127,9 +135,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {sidebarOpen && (
-        <aside className="w-1/4 bg-gray-200 rounded-lg border m-4 relative">
+    <div className="flex flex-col md:flex-row min-h-screen">
+      {(sidebarOpen || !isMobile) && (
+        <aside className="w-full md:w-1/4 bg-gray-200 rounded-lg border m-4 relative">
           <div className="flex items-center justify-between m-4">
             <div className="flex items-center">
               <button
@@ -197,10 +205,10 @@ export default function Home() {
           </div>
         </aside>
       )}
-      {!sidebarOpen && (
+      {(!sidebarOpen || isMobile) && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="m-4 text-gray-600 hover:text-gray-800"
+          className="m-4 text-gray-600 hover:text-gray-800 md:hidden"
         >
           <FaBars />
         </button>
@@ -228,7 +236,7 @@ export default function Home() {
             className="border rounded-lg w-full p-2 pr-10 resize-none text-black bg-white"
             placeholder="Type your message..."
             minRows={1}
-            maxRows={5}
+            maxRows={isMobile ? 3 : 5}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={streaming || !currentChat}
