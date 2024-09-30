@@ -5,6 +5,11 @@ import { FaBars, FaPaperPlane, FaPlus, FaEdit, FaTrash, FaTimes } from 'react-ic
 import TextareaAutosize from 'react-textarea-autosize';
 import { streamMessage, ChatMessage, Chat } from '../actions/stream-message';
 import { readStreamableValue } from 'ai/rsc';
+import ReactMarkdown from 'react-markdown';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { ReactNode } from 'react';
+import { HTMLAttributes } from 'react';
 
 export default function Home() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -222,13 +227,40 @@ export default function Home() {
         <div className="flex-1 bg-gray-800 border rounded-lg p-4 overflow-y-auto">
           {currentChat?.messages.map((message) => (
             <div key={message.id} className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded-lg ${
+              <div className={`inline-block p-2 rounded-lg ${
                 message.role === 'user' 
                   ? 'bg-blue-300 text-gray-900' 
                   : 'bg-gray-600 text-gray-100'
               }`}>
-                {message.content}
-              </span>
+                <ReactMarkdown
+                  components={{
+                    code({node, inline, className, children, ...props}: {
+                      node?: any;
+                      inline?: boolean;
+                      className?: string;
+                      children?: ReactNode;
+                    } & HTMLAttributes<HTMLElement>) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={docco as any}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      )
+                    }
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
             </div>
           ))}
           <div ref={chatEndRef} />
