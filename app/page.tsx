@@ -181,7 +181,12 @@ export default function Home() {
                   defaultValue={chat.name}
                   autoFocus
                   onBlur={(e) => renameChat(chat.id, e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && renameChat(chat.id, e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      renameChat(chat.id, e.currentTarget.value);
+                    }
+                  }}
                   className="bg-white text-black px-1 rounded"
                   onClick={(e) => e.stopPropagation()} // Prevent triggering parent onClick
                 />
