@@ -27,9 +27,16 @@ export default function Home() {
         if (parsedChats.length > 0) {
           setCurrentChat(parsedChats[parsedChats.length - 1]);
         }
+        else {
+          createNewChat();
+        }
       } catch (error) {
         console.error('Error parsing saved chats:', error);
+        createNewChat();
       }
+    }
+    else {
+      createNewChat();
     }
   }, []);
 
@@ -174,7 +181,7 @@ export default function Home() {
                   defaultValue={chat.name}
                   autoFocus
                   onBlur={(e) => renameChat(chat.id, e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && renameChat(chat.id, e.currentTarget.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && renameChat(chat.id, e.currentTarget.value)}
                   className="bg-white text-black px-1 rounded"
                   onClick={(e) => e.stopPropagation()} // Prevent triggering parent onClick
                 />
@@ -273,6 +280,12 @@ export default function Home() {
             maxRows={isMobile ? 3 : 5}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
             disabled={streaming || !currentChat}
           />
           <button
