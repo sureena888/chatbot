@@ -21,7 +21,7 @@ export async function streamMessage(messages: ChatMessage[]) {
 
   (async () => {
     const { textStream } = await streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o"),
       messages: [{ role: "system", content: "You are a helpful assistant." }, ...messages]
     });
 

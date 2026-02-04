@@ -11,9 +11,23 @@ import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ReactNode } from 'react';
 import { HTMLAttributes } from 'react';
 
+const defaultChat: Chat = {
+  id: 'default',
+  name: 'New Chat',
+  messages: []
+};
+
+function titleFromFirstMessage(text: string, maxLen = 40): string {
+  const trimmed = text.trim();
+  if (!trimmed) return 'New Chat';
+  const firstLine = trimmed.split(/\n/)[0].trim();
+  if (firstLine.length <= maxLen) return firstLine;
+  return firstLine.slice(0, maxLen).trim() + '…';
+}
+
 export default function Home() {
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
+  const [chats, setChats] = useState<Chat[]>(() => [defaultChat]);
+  const [currentChat, setCurrentChat] = useState<Chat | null>(() => defaultChat);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -21,22 +35,14 @@ export default function Home() {
     const savedChats = localStorage.getItem('chats');
     if (savedChats) {
       try {
-        const parsedChats = JSON.parse(savedChats); 
-        setChats(parsedChats);
-        // Set the latest chat as the current chat
+        const parsedChats = JSON.parse(savedChats);
         if (parsedChats.length > 0) {
+          setChats(parsedChats);
           setCurrentChat(parsedChats[parsedChats.length - 1]);
-        }
-        else {
-          createNewChat();
         }
       } catch (error) {
         console.error('Error parsing saved chats:', error);
-        createNewChat();
       }
-    }
-    else {
-      createNewChat();
     }
   }, []);
 
@@ -73,13 +79,15 @@ export default function Home() {
     setCurrentChat(newChat);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (!input.trim() || streaming || !currentChat) return;
 
     const newUserMessage: ChatMessage = { id: currentChat.messages.length, role: 'user', content: input };
+    const isFirstMessage = currentChat.messages.length === 0;
     const updatedChat = {
       ...currentChat,
+      name: isFirstMessage ? titleFromFirstMessage(input) : currentChat.name,
       messages: [...currentChat.messages, newUserMessage]
     };
     setCurrentChat(updatedChat);
@@ -132,22 +140,26 @@ export default function Home() {
     setChats(prevChats => {
       const updatedChats = prevChats.filter(chat => chat.id !== chatId);
       if (currentChat?.id === chatId) {
-        // If the deleted chat was the current one, set the new current chat
-        const newCurrentChat = updatedChats[updatedChats.length - 1] || null;
+        const newCurrentChat = updatedChats[updatedChats.length - 1]
+          ?? { id: 'default', name: 'New Chat', messages: [] };
         setCurrentChat(newCurrentChat);
+        if (updatedChats.length === 0) {
+          return [newCurrentChat];
+        }
       }
       return updatedChats;
     });
   };
 
   const clearAllChats = () => {
-    setChats([]);
-    setCurrentChat(null);
+    const newDefault: Chat = { id: 'default', name: 'New Chat', messages: [] };
+    setChats([newDefault]);
+    setCurrentChat(newDefault);
     localStorage.removeItem('chats');
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 text-gray-800">
+    <div className="flex flex-col md:flex-row h-screen min-h-screen overflow-hidden bg-gray-100 text-gray-800">
       {(sidebarOpen || !isMobile) && (
         <aside className={`${isMobile ? 'fixed inset-0 z-50 sidebar-animation' : 'w-1/4'} bg-gray-200 p-4`}>
           <div className="flex items-center justify-between mb-4">
@@ -232,11 +244,11 @@ export default function Home() {
           <FaBars size={24} />
         </button>
       )}
-      <main className="flex-1 flex flex-col p-4">
-        <h2 className="text-2xl font-bold text-center mb-4">
+      <main className="flex-1 flex flex-col min-h-0 p-4">
+        <h2 className="text-2xl font-bold text-center mb-4 flex-shrink-0">
           {currentChat ? currentChat.name : 'New Chat'}
         </h2>
-        <div className="flex-1 bg-gray-800 border rounded-lg p-4 overflow-y-auto">
+        <div className="flex-1 min-h-0 bg-gray-800 border rounded-lg p-4 overflow-y-auto">
           {currentChat?.messages.map((message) => (
             <div key={message.id} className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
               <div className={`inline-block p-2 rounded-lg ${
@@ -277,10 +289,10 @@ export default function Home() {
           ))}
           <div ref={chatEndRef} />
         </div>
-        <form onSubmit={handleSubmit} className="mt-4 relative">
+        <form onSubmit={handleSubmit} className="mt-4 relative flex-shrink-0">
           <TextareaAutosize
             className="border rounded-lg w-full p-2 pr-10 resize-none text-black bg-white"
-            placeholder="Type your message..."
+            placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
             minRows={1}
             maxRows={isMobile ? 3 : 5}
             value={input}
